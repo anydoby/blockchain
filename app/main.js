@@ -9,9 +9,10 @@ let lastBlock = {};
 for (var i = 0; i <= 10; i++) {
   lastBlock = blockchain.addBlock(new Block("test data "+i));
 }
-lastBlock.then(()=>{return blockchain.validate()})
+lastBlock.then(()=>{return blockchain.validateChain()})
 	.then((result)=>{
 		if (result){
 			console.log('Blockchain is valid')
 		}
 });
+

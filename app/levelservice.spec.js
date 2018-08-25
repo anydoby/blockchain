@@ -42,11 +42,11 @@ describe('Writing/reading to/from DB', ()=> {
 	});
 
 	it('should get the top block', ()=> {
-		return sut.addBlock(new Block('a', 10))
+		return sut.addBlock(new Block('a', 1))
 		.then(()=>{return sut.addBlock(new Block('b', 2));})
 		.then(()=>{return sut.addBlock(new Block('c', 3));})
 		.then(()=> {
-			return expect(sut.getBlockHeight()).to.eventually.equal(10);
+			return expect(sut.getBlockHeight()).to.eventually.equal(2);
 		});
 	});
 

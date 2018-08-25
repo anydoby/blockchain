@@ -22,12 +22,11 @@ describe('Blockchain', ()=> {
 	afterEach(()=> {sut.close()});
 	after(()=> {sut.close()});
 
-
 	it('should create a genesis block on creation', ()=> {
 		return expect(sut.genesis).to.eventually.matchPattern(`{
 			body: 'first block',
 			previousBlockHash: '',
-			height: 1,
+			height: 0,
 			hash: /[a-z0-9]{64}/,
 			time: /\\d+/
 			}`
@@ -43,7 +42,7 @@ describe('Blockchain', ()=> {
 		return expect(result).to.eventually.matchPattern(`{
 			body: 'next block',
 			previousBlockHash: '`+genesisBlock.hash+`',
-			height: 2,
+			height: 1,
 			hash: /[a-z0-9]{64}/,
 			time: _.isBetween|`+(genesisBlock.time-1)+`|9999999999,
 			}`
@@ -56,7 +55,7 @@ describe('Blockchain', ()=> {
 		}).then(()=>{
 			return sut.addBlock(new Block('fourth block'));
 		}).then(()=> {
-			return sut.validate();
+			return sut.validateChain();
 		});
 
 		return expect(validation).to.eventually.be.true;
@@ -67,10 +66,10 @@ describe('Blockchain', ()=> {
 			storedBlock.previousBlockHash = '39c5e5cd5a04274c56e3773d1cf316157bf1bbdff43390c03410e3295541f248';
 			return sut.db.store.put(Block.leftPad(storedBlock.height), JSON.stringify(storedBlock));
 		}).then(()=>{
-			return sut.validate()
+			return sut.validateChain()
 		});
 
-		return expect(validation).to.eventually.be.rejectedWith('Block is invalid: 2');
+		return expect(validation).to.eventually.be.rejectedWith('Block is invalid: 1');
 	});
 
 	it('should not be valid if data was tampered with', ()=> {
@@ -78,10 +77,10 @@ describe('Blockchain', ()=> {
 			storedBlock.body = 'slightly different second block';
 			return sut.db.store.put(Block.leftPad(storedBlock.height), JSON.stringify(storedBlock));
 		}).then(()=>{
-			return sut.validate()
+			return sut.validateChain()
 		});
 
-		return expect(validation).to.eventually.be.rejectedWith('Block is invalid: 2');
+		return expect(validation).to.eventually.be.rejectedWith('Block is invalid: 1');
 	});
 
 	it('should validate values in alphabetic order', ()=> {
@@ -89,7 +88,26 @@ describe('Blockchain', ()=> {
 		for (i = 0; i < 20; i++) {
 			lastBlock = sut.addBlock(new Block('block ' + i));
 		}
-		let validation = lastBlock.then(()=>{return sut.validate()});
+		let validation = lastBlock.then(()=>{return sut.validateChain()});
 		return expect(validation).to.eventually.be.true;
 	});
+
+	it('should validate genesis block', ()=> {
+		return expect(sut.validateBlock(0)).to.eventually.be.true;
+	})
+
+	it('should validate a good block', ()=> {
+		let validation = sut.addBlock(new Block('second block')).then(()=>{return sut.validateBlock(1)});
+		return expect(validation).to.eventually.be.true;
+	})
+
+	it('should not validate a bad block', ()=> {
+		let validation = sut.addBlock(new Block('second block'))
+			.then((block)=> {
+				block.previousBlockHash = block.previousBlockHash+'oops';
+				return sut.db.store.put(Block.leftPad(block.height), JSON.stringify(block));
+			})
+			.then(()=> {return sut.validateBlock(1)});
+		return expect(validation).to.eventually.be.rejectedWith('Block is invalid: ' + 1);
+	})
 });

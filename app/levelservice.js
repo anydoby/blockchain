@@ -30,12 +30,12 @@ module.exports = class Db {
 	}
 
 	getBlock(height) {
-		return this.store.get(Block.leftPad(height)).then(JSON.parse);
+		return this.store.get(Block.leftPad(height)).then(Block.of);
 	}
 
 	forEachBlock(blockCallback, doneCallback) {
 		this.store.createValueStream()
-			.on('data', (json)=>{blockCallback(JSON.parse(json))})
+			.on('data', (json)=>{blockCallback(Block.of(json))})
 			.on('close', doneCallback);
 	}
 
@@ -43,8 +43,8 @@ module.exports = class Db {
 		return new Promise((resolve, reject)=>{
 			let height = 0;
 			this.store.createKeyStream()
-			.on('data', (key)=>{height = Math.max(height, key);})
-			.on('close', ()=> resolve(height));			
+			.on('data', (key)=>{height++})
+			.on('close', ()=> resolve(height-1));			
 		});
 	}
 

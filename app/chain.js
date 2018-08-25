@@ -4,11 +4,11 @@ module.exports = class Blockchain {
 	constructor(db) {
 		this.db = db;
 		this.genesis = new Promise((resolve, reject)=>{
-			db.getBlock(1)
+			db.getBlock(0)
 				.then(resolve)
 				.catch((error)=>{
 					console.log('did not find genesis block, generating one');
-					let block = new Block('first block', 1);
+					let block = new Block('first block');
 					block.time = block.now();
 					block.hash = block.sha();
 					db.addBlock(block).then(resolve).catch(reject);
@@ -38,24 +38,55 @@ module.exports = class Blockchain {
 	* Validates the chain and fails on first invalid block. Gathering all errors may consume 
 	* all physical memory if the chain is big enough.
 	*/
-	validate() {
+	validateChain() {
 		let db = this.db;
+		let queue = this.queue;
 		return new Promise((resolve, reject)=> {
 			let previousBlockHash='';
-			db.forEachBlock((blockData)=> {
-				let b = new Block();
-				Object.assign(b, blockData);
-				console.log('validating ' + JSON.stringify(b));
-				if (!b.validate()) {
-					reject('Block is invalid: ' + b.height);
-				}
-				// this thing is never reached since block's hash includes previousBlockHash anyway.
-				if (previousBlockHash!==b.previousBlockHash) {
-					reject('Previous hash is invalid: ' + b.height);
-				}
-				previousBlockHash = b.hash;
-			}, ()=>{resolve(true)});
+			queue.then(()=> {
+				db.forEachBlock((block)=> {
+					if (Blockchain.validateBlockImpl(block, reject)){
+						// this thing is never reached since block's hash includes previousBlockHash anyway.
+						if (previousBlockHash!==block.previousBlockHash) {
+							reject('Previous hash is invalid: ' + block.height);
+						}
+						previousBlockHash = block.hash;					
+					}
+				}, ()=>{resolve(true)});
+			});
 		});
+	}
+
+	validateBlock(height) {
+		let db = this.db;
+		let queue = this.queue;
+		return new Promise((resolve, reject)=> {
+			queue.then(()=> {
+				db.getBlock(height).then((block)=> {
+					if (Blockchain.validateBlockImpl(block, reject)) {
+						if (height>0) {
+							db.getBlock(height-1).then((previousBlock)=>{
+								if (previousBlock.hash !== block.previousBlockHash){
+									reject('Previous hash is invalid: ' + height);
+								} else {
+									resolve(true);
+								}
+							})
+						} else {
+							resolve(true);
+						}
+					}
+				}).catch(reject);
+			});
+		});
+	}
+
+	static validateBlockImpl(block, reject) {
+		console.log('validating ' + JSON.stringify(block));
+		if (!block.validate()) {
+			reject('Block is invalid: ' + block.height);
+		}
+		return true;
 	}
 
 }
