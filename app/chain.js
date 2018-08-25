@@ -44,15 +44,18 @@ module.exports = class Blockchain {
 		return new Promise((resolve, reject)=> {
 			let previousBlockHash='';
 			queue.then(()=> {
+				let errors = [];
 				db.forEachBlock((block)=> {
-					if (Blockchain.validateBlockImpl(block, reject)){
+					if (block.validate()){
 						// this thing is never reached since block's hash includes previousBlockHash anyway.
 						if (previousBlockHash!==block.previousBlockHash) {
-							reject('Previous hash is invalid: ' + block.height);
+							errors.push(block.height);
 						}
-						previousBlockHash = block.hash;					
+					} else {
+						errors.push(block.height);
 					}
-				}, ()=>{resolve(true)});
+					previousBlockHash = block.hash;					
+				}, ()=>{resolve(errors)});
 			});
 		});
 	}
@@ -63,11 +66,11 @@ module.exports = class Blockchain {
 		return new Promise((resolve, reject)=> {
 			queue.then(()=> {
 				db.getBlock(height).then((block)=> {
-					if (Blockchain.validateBlockImpl(block, reject)) {
+					if (block.validate()) {
 						if (height>0) {
-							db.getBlock(height-1).then((previousBlock)=>{
+							db.getBlock(height-1).then((previousBlock) => {
 								if (previousBlock.hash !== block.previousBlockHash){
-									reject('Previous hash is invalid: ' + height);
+									reject(false);
 								} else {
 									resolve(true);
 								}
@@ -75,18 +78,12 @@ module.exports = class Blockchain {
 						} else {
 							resolve(true);
 						}
+					} else {
+						resolve(false);
 					}
 				}).catch(reject);
 			});
 		});
-	}
-
-	static validateBlockImpl(block, reject) {
-		console.log('validating ' + JSON.stringify(block));
-		if (!block.validate()) {
-			reject('Block is invalid: ' + block.height);
-		}
-		return true;
 	}
 
 }

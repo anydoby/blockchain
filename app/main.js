@@ -11,8 +11,8 @@ for (var i = 0; i <= 10; i++) {
 }
 lastBlock.then(()=>{return blockchain.validateChain()})
 	.then((result)=>{
-		if (result){
-			console.log('Blockchain is valid')
+		if (result) {
+			console.log('Blockchain is valid: ' + JSON.stringify(result))
 		}
 });
 

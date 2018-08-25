@@ -58,7 +58,7 @@ describe('Blockchain', ()=> {
 			return sut.validateChain();
 		});
 
-		return expect(validation).to.eventually.be.true;
+		return expect(validation).to.eventually.eql([]);
 	});
 
 	it('should not be valid if previousBlockHash was tampered with', ()=> {
@@ -69,7 +69,7 @@ describe('Blockchain', ()=> {
 			return sut.validateChain()
 		});
 
-		return expect(validation).to.eventually.be.rejectedWith('Block is invalid: 1');
+		return expect(validation).to.eventually.eql([1]);
 	});
 
 	it('should not be valid if data was tampered with', ()=> {
@@ -80,7 +80,7 @@ describe('Blockchain', ()=> {
 			return sut.validateChain()
 		});
 
-		return expect(validation).to.eventually.be.rejectedWith('Block is invalid: 1');
+		return expect(validation).to.eventually.eql([1]);
 	});
 
 	it('should validate values in alphabetic order', ()=> {
@@ -89,7 +89,7 @@ describe('Blockchain', ()=> {
 			lastBlock = sut.addBlock(new Block('block ' + i));
 		}
 		let validation = lastBlock.then(()=>{return sut.validateChain()});
-		return expect(validation).to.eventually.be.true;
+		return expect(validation).to.eventually.eql([]);
 	});
 
 	it('should validate genesis block', ()=> {
@@ -108,6 +108,6 @@ describe('Blockchain', ()=> {
 				return sut.db.store.put(Block.leftPad(block.height), JSON.stringify(block));
 			})
 			.then(()=> {return sut.validateBlock(1)});
-		return expect(validation).to.eventually.be.rejectedWith('Block is invalid: ' + 1);
+		return expect(validation).to.eventually.be.false;
 	})
 });
