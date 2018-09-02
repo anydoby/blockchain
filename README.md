@@ -40,3 +40,26 @@ npm start
 ```
 
 it execute the application. It basically does what is asked in the original readme: creates a chain and validates it. Validation of the modified chain is tested separately in `app/chain.spec.js`.
+
+## Web API
+
+When the project is started a port 8000 on localhost is opened with a web service. This service allows getting blocks by their height and adding new blocks to the chain via the following methods:
+
+GET /block/{height} gets the block content
+POST /block puts the 'body' of data to the new block returning the new block's contents
+
+```
+	curl "http://localhost:8000/block/0" 
+```
+
+returns the genesis block
+
+```
+curl -X "POST" "http://localhost:8000/block" \
+     -H 'Content-Type: application/json' \
+     -d $'{
+  "body": "Testing block with test string data"
+}'
+```
+
+adds a new block to the end of the chain

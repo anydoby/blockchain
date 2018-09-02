@@ -20,6 +20,10 @@ module.exports = class Block {
         return Object.assign(new Block(), JSON.parse(json));
     }
 
+    json() {
+        return JSON.stringify(this);
+    }
+
     now() {
         return parseInt(new Date().getTime().toString().slice(0,-3));
     }

@@ -4,8 +4,8 @@ module.exports = class Blockchain {
 	constructor(db) {
 		this.db = db;
 		this.genesis = new Promise((resolve, reject)=>{
-			db.getBlock(0)
-				.then(resolve)
+			return db.getBlock(0)
+				.then(block => resolve(block))
 				.catch((error)=>{
 					console.log('did not find genesis block, generating one');
 					let block = new Block('first block');
@@ -32,6 +32,14 @@ module.exports = class Blockchain {
 				return db.addBlock(block);
 			});
 		return this.queue;
+	}
+
+	getBlock(height) {
+		return this.db.getBlock(height);
+	}
+
+	getSize(){
+		return this.db.getBlockHeight();
 	}
 
 	/**
