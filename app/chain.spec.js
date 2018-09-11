@@ -11,10 +11,8 @@ const fs = require('fs-extra');
 describe('Blockchain', ()=> {
 	let sut = {};
 	beforeEach(()=> {
-		console.log('creating test blockchain');
 		sut = new Blockchain(new Db('testchain'));
 		sut.close = function() {
-			console.log('closing test blockchain');
 			this.db.close();
 			fs.removeSync('testchain');		
 		}

@@ -12,13 +12,9 @@ module.exports = class Db {
 	addBlock(block) {
 		let store = this.store;
 		let key = Block.leftPad(block.height);
-		console.log('adding block ' + JSON.stringify(block) + ' with key ' + key);
-		return this.store.get(key).then((result)=> {
-					console.log('Found a record with the same height of ' + block.height);
-				},
+		return this.store.get(key).then((result)=> {},
 				(error)=> {
 					if (error.notFound) {
-					console.log('No block with height ' + block.height + ". Adding it to the chain.");
 						return store.put(key, JSON.stringify(block))
 							.then(()=>{return block})
 							.catch((error)=> {

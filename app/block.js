@@ -1,5 +1,5 @@
 const sha256 = require('crypto-js/sha256');
-
+const logging = false
 module.exports = class Block {
 
 	constructor(data, height){
@@ -39,7 +39,6 @@ module.exports = class Block {
         if (this.hash === digest) {
             return true;
         } else {
-            console.log("Stored hash " +this.hash +" does not match calculated hash "+digest);
             return false
         }
     }

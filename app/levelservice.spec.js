@@ -9,10 +9,8 @@ const fs = require('fs-extra')
 describe('Writing/reading to/from DB', ()=> {
 	let sut = {};
 	beforeEach(()=>{
-		console.log('creating test db');
 		sut = new Db('testchain');
 		sut.close = function() {
-			console.log('closing test db');
 			this.store.close();
 			fs.removeSync('testchain');		
 		};
@@ -24,7 +22,6 @@ describe('Writing/reading to/from DB', ()=> {
 	it('addBlock() should write a block by id', ()=>{
 		return sut.addBlock(b).then(()=> {
 			sut.getBlock(b.height).then((rs)=> {
-				console.log('got result ' + JSON.stringify(rs));
 			});
 			return expect(sut.getBlock(123)).to.eventually.deep.equal(b);
 		});
@@ -35,7 +32,6 @@ describe('Writing/reading to/from DB', ()=> {
 			return sut.addBlock(new Block('another data', 123));
 		}).then(()=> {
 			sut.getBlock(b.height).then((rs)=> {
-				console.log('got result ' + JSON.stringify(rs));
 			});
 			return expect(sut.getBlock(123)).to.eventually.deep.equal(b);
 		});
