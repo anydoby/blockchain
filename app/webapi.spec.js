@@ -52,19 +52,20 @@ generateTestStar = async function() {
 }
 
 describe('WEB API', async () => {
-	let server = new WebAPI(blockchain);
+	let server = {}
 	before(async () => {
 		server = await blockchain.genesis.then(async () => {
-			let s = new WebAPI(blockchain);
-			await s.start('localhost', 8888);
-			return s;
-		});
-	});
-	after(() => {
-		server.close();
-		db.close();
-		fs.removeSync('./apitestchain');
-	});
+			let s = new WebAPI(blockchain)
+			await s.start('localhost', 8888)
+			return s
+		})
+	})
+	after( async () => {
+		await server.close()
+		db.close()
+		fs.removeSync('./apitestchain')
+		fs.removeSync('./validation-requests')
+	})
 
 
 	it('should return a block when it exsts', done => {
@@ -90,16 +91,19 @@ describe('WEB API', async () => {
 			});
 	})
 
-	it('should accept a new block', done => {
+	it('should not accept a new block without validation', done => {
 		chai.request(service).post('/block').send({
 				body: 'some new data block'
 			})
 			.end((error, res) => {
-				expect(res).to.have.status(400)
+				expect(JSON.parse(res.text)).to.matchPattern(`{
+					message : 'please specify address for validation',
+					statusCode : 400,
+					error : 'Bad Request'
+				}`)
 				done()
 			})
 	})
-
 	it('should accept good address for requestValidation', done => {
 		chai.request(service).post('/requestValidation').send({
 				address: '142BDCeSGbXjWKaAnYXbMpZ6sbrSAo3DpZ'
@@ -138,7 +142,7 @@ describe('WEB API', async () => {
 			})
 			.end((error, res) => {
 				expect(JSON.parse(res.text)).to.matchPattern(`{
-					message : 'please initate address validation first',
+					message : 'please initiate address validation first',
 					statusCode : 400,
 					error : 'Bad Request'
 				}`)
@@ -166,6 +170,31 @@ describe('WEB API', async () => {
 					})
 
 			})
+	})
+
+	it('should not register a star unless address is verified', done => {
+		chai.request(service).post('/requestValidation').send({
+				address
+			})
+			.end((error, res) => {
+				const {
+					message
+				} = JSON.parse(res.text)
+
+				chai.request(service).post('/block').send({
+					address,
+					star: {
+						dec: "-36° 29' 24.9",
+						ra: "16h 29m 1.0s",
+						story: 'some star story'
+					}
+				}).end((error, res) => {
+					expect(res).to.have.status(400)
+					done()
+				})
+
+			})
+
 	})
 
 	describe('after address verification', () => {
@@ -205,7 +234,7 @@ describe('WEB API', async () => {
 			}).end((error, res) => {
 				expect(res).to.have.status(400)
 				done()
-			})			
+			})
 		})
 	})
 
@@ -218,7 +247,7 @@ describe('WEB API', async () => {
 		it('should find block by wallet address', done => {
 			chai.request(service).get(`/stars/address:${address}`).end((error, res) => {
 				expect(JSON.parse(res.text).length).to.be.above(2)
-				expect(JSON.parse(res.text).find(b=>b.hash==block.hash)).to.matchPattern(block)
+				expect(JSON.parse(res.text).find(b => b.hash == block.hash)).to.matchPattern(block)
 				done()
 			})
 		})

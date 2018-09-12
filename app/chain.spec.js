@@ -14,7 +14,7 @@ describe('Blockchain', ()=> {
 		sut = new Blockchain(new Db('testchain'));
 		sut.close = function() {
 			this.db.close();
-			fs.removeSync('testchain');		
+			fs.removeSync('./testchain');		
 		}
 	});
 	afterEach(()=> {sut.close()});

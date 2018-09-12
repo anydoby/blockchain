@@ -31,6 +31,7 @@ module.exports = class WebAPI {
 		});
 		let server = this.server;
 		let validator = this.validator
+
 		const init = async () => {
 			await server.start();
 			// get block route
@@ -39,12 +40,8 @@ module.exports = class WebAPI {
 				path: '/block/{id}',
 				handler: async (request, h) => {
 					return chain.getBlock(request.params.id)
-						.then(block => {
-							return h.response(WebAPI.decodeStory(block))
-						})
-						.catch(err => {
-							return h.response({}).code(404);
-						});
+						.then(block => h.response(WebAPI.decodeStory(block)))
+						.catch(err => h.response({}).code(404));
 				}
 			});
 
@@ -54,63 +51,51 @@ module.exports = class WebAPI {
 				path: '/block',
 				handler: async (request, h) => {
 					const address = request.payload.address
-					try {
-						validator.checkAddressVerified(address)
-						const {
-							ra,
-							dec,
-							mag,
-							cen,
-							story
-						} = request.payload.star
-						checkNotNull(ra, 'ra')
-						checkNotNull(dec, 'dec')
-						checkNotNull(story, 'story')
-						checkMatches(dec, /[\-\+]?\d+° \d+\' \d(\.\d)?/)
-						checkMatches(ra, /\d{1,2}h \d{1,2}m \d(\.\d)?s/)
+					return validator.checkAddressVerified(address)
+						.then(verified => {
+							if (verified) {
+								const {
+									ra,
+									dec,
+									mag,
+									cen,
+									story
+								} = request.payload.star
+								checkNotNull(ra, 'ra')
+								checkNotNull(dec, 'dec')
+								checkNotNull(story, 'story')
+								checkMatches(dec, /[\-\+]?\d+° \d+\' \d(\.\d)?/)
+								checkMatches(ra, /\d{1,2}h \d{1,2}m \d(\.\d)?s/)
 
-						const block = new Block({
-							address,
-							star: {
-								ra,
-								dec,
-								mag,
-								cen,
-								story: Buffer.from(story, 'utf-8').toString('hex')
+								const block = new Block({
+									address,
+									star: {
+										ra,
+										dec,
+										mag,
+										cen,
+										story: Buffer.from(story, 'utf-8').toString('hex')
+									}
+								});
+								return chain.addBlock(block).then(block => h.response(block));
+							} else {
+								throw 'your address has not been verified'
 							}
-						});
-						return chain.addBlock(block)
-							.then(block => {
-								return h.response(block);
-							});
-					} catch (e) {
-						return Boom.badRequest(e)
-					}
+						})
+						.catch(Boom.badRequest)
 				}
 			});
 
 			server.route({
 				method: 'POST',
 				path: '/requestValidation',
-				handler: (request, h) => {
-					try {
-						return validator.startValidation(request.payload.address)
-					} catch (e) {
-						return Boom.badRequest(e)
-					}
-				}
-			});
+				handler: (request, h) => validator.startValidation(request.payload.address).catch(Boom.badRequest)
+			})
 
 			server.route({
 				method: 'POST',
 				path: '/message-signature/validate',
-				handler: (request, h) => {
-					try {
-						return validator.verifySignature(request.payload.address, request.payload.signature)
-					} catch (e) {
-						return Boom.badRequest(e)
-					}
-				}
+				handler: (request, h) => validator.verifySignature(request.payload.address, request.payload.signature).catch(Boom.badRequest)
 			});
 
 			server.route({
@@ -142,6 +127,7 @@ module.exports = class WebAPI {
 	}
 
 	async close() {
+		this.validator.close()
 		return this.server.stop({
 			timeout: 10000
 		});
