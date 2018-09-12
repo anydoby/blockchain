@@ -20,7 +20,7 @@ let db = new Db('./apitestchain');
 let blockchain = new Blockchain(db);
 const service = 'http://localhost:8888';
 
-generateTestStar = async function() {
+login = function() {
 	return chai.request(service).post('/requestValidation').send({
 			address
 		})
@@ -34,6 +34,10 @@ generateTestStar = async function() {
 				signature
 			})
 		})
+}
+
+generateTestStar = async function() {
+	return login()
 		.then(res => {
 			return chai.request(service).post('/block').send({
 				address,
@@ -60,7 +64,7 @@ describe('WEB API', async () => {
 			return s
 		})
 	})
-	after( async () => {
+	after(async () => {
 		await server.close()
 		db.close()
 		fs.removeSync('./apitestchain')
@@ -204,22 +208,55 @@ describe('WEB API', async () => {
 		})
 
 		it('star should be registered ok', done => {
-			chai.request(service).post('/block').send({
-				address,
-				star: {
-					dec: "-26° 29' 24.9",
-					ra: "16h 29m 1.0s",
-					story: 'some star story'
-				}
-			}).end((error, res) => {
-				expect(res).to.have.status(200)
-				const block = JSON.parse(res.text)
-				expect(block.height).to.be.at.least(2)
-				expect(block.body.address).to.equal(address)
-				expect(block.body.star.ra).to.equal("16h 29m 1.0s")
-				expect(block.body.star.dec).to.equal("-26° 29' 24.9")
-				expect(new Buffer(block.body.star.story, 'hex').toString()).to.equal("some star story")
-				done()
+			login().then(() => {
+				chai.request(service).post('/block').send({
+					address,
+					star: {
+						dec: "-26° 29' 24.9",
+						ra: "16h 29m 1.0s",
+						story: 'some star story'
+					}
+				}).end((error, res) => {
+					expect(res).to.have.status(200)
+					const block = JSON.parse(res.text)
+					expect(block.height).to.be.at.least(2)
+					expect(block.body.address).to.equal(address)
+					expect(block.body.star.ra).to.equal("16h 29m 1.0s")
+					expect(block.body.star.dec).to.equal("-26° 29' 24.9")
+					expect(new Buffer(block.body.star.story, 'hex').toString()).to.equal("some star story")
+					done()
+				})
+			})
+		})
+
+		it('and star addition you must verify address again', done => {
+			// register a star
+			login().then(() => {
+				chai.request(service).post('/block').send({
+					address,
+					star: {
+						dec: "-46° 29' 24.9",
+						ra: "16h 29m 1.0s",
+						story: 'some star story'
+					}
+				}).end((error, res) => {
+					expect(res).to.have.status(200)
+					chai.request(service).post('/block').send({
+						address,
+						star: {
+							dec: "-56° 29' 24.9",
+							ra: "16h 29m 1.0s",
+							story: 'some other star story'
+						}
+					}).end((error, res) => {
+						expect(JSON.parse(res.text)).to.matchPattern(`{
+								message : 'please initiate address validation first',
+								statusCode : 400,
+								error : 'Bad Request'
+							}`)
+						done()
+					})
+				})
 			})
 		})
 

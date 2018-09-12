@@ -13,6 +13,10 @@ module.exports = class Validator {
 		await this.pendingRequests.close()
 	}
 
+	removeVerification(address) {
+		return this.pendingRequests.del(address)
+	}
+
 	startValidation(address) {
 		return new Promise((resolve, reject) => {
 			let valid = this.validate(address, btc.networks.mainnet) || this.validate(address, btc.networks.testnet);

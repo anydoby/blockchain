@@ -76,8 +76,10 @@ module.exports = class WebAPI {
 										cen,
 										story: Buffer.from(story, 'utf-8').toString('hex')
 									}
-								});
-								return chain.addBlock(block).then(block => h.response(block));
+								})
+								return chain.addBlock(block).then(block => {
+									return validator.removeVerification(address).then(() => h.response(block))
+								})
 							} else {
 								throw 'your address has not been verified'
 							}
