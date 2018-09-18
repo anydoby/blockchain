@@ -10,6 +10,8 @@ These instructions will get you a copy of the project up and running on your loc
 
 Installing Node and NPM is pretty straightforward using the installer package available from the (Node.js® web site)[https://nodejs.org/en/].
 
+The version used in the project is 8.11.4
+
 ### Configuring your project
 
 - Use NPM to initialize your project and create package.json to store project dependencies.
@@ -43,16 +45,23 @@ it execute the application. It basically does what is asked in the original read
 
 ## Web API
 
+RESTful API is implemented using Hapi js framework. 
+
 When the project is started a port 8000 on localhost is opened with a web service. This service allows getting blocks by their height and adding new blocks to the chain via the following methods:
 
-GET /block/{height} gets the block content
-POST /block puts the 'body' of data to the new block returning the new block's contents
+### getting blocks
 
+GET /block/{height} gets the block content
 ```
 	curl "http://localhost:8000/block/0" 
 ```
 
-returns the genesis block
+returns the genesis block.
+
+### inserting blocks
+
+POST /block puts the 'body' of data to the new block returning the new block's contents
+
 
 ```
 curl -X "POST" "http://localhost:8000/block" \
@@ -62,4 +71,4 @@ curl -X "POST" "http://localhost:8000/block" \
 }'
 ```
 
-adds a new block to the end of the chain
+adds a new block to the end of the chain.
