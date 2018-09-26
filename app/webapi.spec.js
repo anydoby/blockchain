@@ -90,7 +90,11 @@ describe('WEB API', async () => {
 	it('should return an error if block is missing', done => {
 		chai.request(service).get('/block/100500')
 			.end((error, res) => {
-				expect(res).to.have.status(404);
+				expect(JSON.parse(res.text)).to.matchPattern(`{
+					message : 'enter a valid block height',
+					statusCode : 400,
+					error : 'Bad Request'
+				}`)
 				done();
 			});
 	})

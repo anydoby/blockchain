@@ -41,7 +41,7 @@ module.exports = class WebAPI {
 				handler: async (request, h) => {
 					return chain.getBlock(request.params.id)
 						.then(block => h.response(WebAPI.decodeStory(block)))
-						.catch(err => h.response({}).code(404));
+						.catch(err => Boom.badRequest('enter a valid block height'))
 				}
 			});
 
@@ -51,6 +51,7 @@ module.exports = class WebAPI {
 				path: '/block',
 				handler: async (request, h) => {
 					const address = request.payload.address
+
 					return validator.checkAddressVerified(address)
 						.then(verified => {
 							if (verified) {
@@ -64,6 +65,7 @@ module.exports = class WebAPI {
 								checkNotNull(ra, 'ra')
 								checkNotNull(dec, 'dec')
 								checkNotNull(story, 'story')
+								checkMatches(story, /.+/)
 								checkMatches(dec, /[\-\+]?\d+° \d+\' \d(\.\d)?/)
 								checkMatches(ra, /\d{1,2}h \d{1,2}m \d(\.\d)?s/)
 
