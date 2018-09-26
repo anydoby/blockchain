@@ -25,7 +25,7 @@ module.exports = class WebAPI {
 						})
 						.catch(err=> {
 							console.log(err);
-							return h.response({}).code(404);
+							return h.response({error:'enter the valid block height'}).code(404);
 						});
 				}
 			});
@@ -36,6 +36,9 @@ module.exports = class WebAPI {
 				path: '/block',
 				handler: async (request, h) => {
 					let data = request.payload.body;
+					if (data.trim() == '') {
+						return h.response({error:'please provide a body'}).code(500)
+					}
 					let block = new Block(data);
 					return chain.addBlock(block)
 						.then(block=> {
