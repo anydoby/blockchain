@@ -21,6 +21,9 @@ label {
 .red {
     color: red;
 }
+.green {
+    color: darkgreen;
+}
 button {
     margin: 2em 0;
     padding: 1em 4em;
