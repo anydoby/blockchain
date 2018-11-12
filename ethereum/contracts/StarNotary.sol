@@ -84,6 +84,10 @@ contract StarNotary is ERC721 {
                 );
     }
 
+    function token(string _ra, string _dec, string _mag, string _con) public pure returns (uint256) {
+        return uint256(keccak256(_ra, _dec, _mag, _con));
+    }
+
     function validateCoordinate(string str) internal pure returns (bool) {
         bytes memory b = bytes(str);
         if (b.length == 0) {

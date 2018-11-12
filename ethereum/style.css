@@ -3,6 +3,11 @@ body {
     padding: 2em;
     font-family: 'Raleway','Source Sans Pro', 'Arial';
 }
+label {
+  display: inline-block;
+  width: 150px;
+  text-align: right;
+}​        
 .container {
     width: 50%;
     margin: 0 auto;
@@ -12,6 +17,9 @@ body {
 }
 .row {
     margin-bottom:10px;
+}
+.red {
+    color: red;
 }
 button {
     margin: 2em 0;
